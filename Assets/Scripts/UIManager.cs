@@ -11,6 +11,10 @@ public class UIManager : MonoBehaviour
     public Button howToPlayButton;
     public Button settingsButton;
 
+    //How to play
+    public GameObject howToPlayPanel;
+    public Button backButton;
+
     //in game UI
     public GameObject inGamePanel;
     public TextMeshProUGUI scoreText;
@@ -51,6 +55,7 @@ public class UIManager : MonoBehaviour
         playButton.onClick.AddListener(StartGame);
         howToPlayButton.onClick.AddListener(ShowHowToPlay);
         settingsButton.onClick.AddListener(ShowSettings);
+        backButton.onClick.AddListener(BackToMenu);
 
         //Game over UI
         retryButton.onClick.AddListener(RetryGame);
@@ -71,12 +76,20 @@ public class UIManager : MonoBehaviour
 
     private void ShowHowToPlay()
     {
-
+        mainMenuPanel.SetActive(false);
+        howToPlayPanel.SetActive(true);
     }
 
     private void ShowSettings()
     {
 
+    }
+
+    private void BackToMenu()
+    {
+        howToPlayPanel.SetActive(false);
+
+        mainMenuPanel.SetActive(true);
     }
 
     public void UpdateScore(int score)

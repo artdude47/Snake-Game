@@ -41,13 +41,13 @@ public class SnakeController : MonoBehaviour
     {
         if (GameManager.instance.currentState == GameManager.GameState.Playing)
         {
-            if (Input.GetKeyDown(KeyCode.W) && currentDirection.y == 0)
+            if (Input.GetKeyDown(KeyCode.W) || Input.GetKeyDown(KeyCode.UpArrow) && currentDirection.y == 0)
                 currentDirection = new Vector2Int(0, 1);
-            else if (Input.GetKeyDown(KeyCode.S) && currentDirection.y == 0)
+            else if (Input.GetKeyDown(KeyCode.S) || Input.GetKeyDown(KeyCode.DownArrow) && currentDirection.y == 0)
                 currentDirection = new Vector2Int(0, -1);
-            else if (Input.GetKeyDown(KeyCode.A) && currentDirection.x == 0)
+            else if (Input.GetKeyDown(KeyCode.A) || Input.GetKeyDown(KeyCode.LeftArrow) && currentDirection.x == 0)
                 currentDirection = new Vector2Int(-1, 0);
-            else if (Input.GetKeyDown(KeyCode.D) && currentDirection.x == 0)
+            else if (Input.GetKeyDown(KeyCode.D) || Input.GetKeyDown(KeyCode.RightArrow) && currentDirection.x == 0)
                 currentDirection = new Vector2Int(1, 0);
         }
     }
