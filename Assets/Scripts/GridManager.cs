@@ -11,17 +11,23 @@ public class GridManager : MonoBehaviour
 
     private void Awake()
     {
-        PlayerPrefs.DeleteAll();
         //implement singleton pattern
         if (instance == null)
         {
             instance = this;
-            DontDestroyOnLoad(gameObject);
         }
         else
         {
             Destroy(gameObject);
             return;
+        }
+    }
+
+    private void OnDestroy()
+    {
+        if (instance == this)
+        {
+            instance = null;
         }
     }
 
@@ -37,7 +43,7 @@ public class GridManager : MonoBehaviour
     }
 
     //Draw the boundary walls around the grid for visualization
-    private void DrawBoundary()
+    public void DrawBoundary()
     {
         for (int i = 0; i < gridSize.x; i++)
         {

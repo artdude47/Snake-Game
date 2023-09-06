@@ -42,6 +42,7 @@ public class UIManager : MonoBehaviour
         GameEvents.OnScoreChange -= UpdateScore;
         GameEvents.OnTimeChange -= UpdateTimeSurvived;
         GameEvents.OnGamePause -= ShowPauseStatus;
+        GameEvents.OnGameOver -= ShowGameOver;
     }
 
     private void Start()
@@ -112,8 +113,9 @@ public class UIManager : MonoBehaviour
 
     private void RetryGame()
     {
-        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
-        GameManager.instance.StartGame();
+        gameOverPanel.SetActive(false);
+        inGamePanel.SetActive(true);
+        GameManager.instance.RetryGame();
     }
 
     private void ReturnToMainMenu()

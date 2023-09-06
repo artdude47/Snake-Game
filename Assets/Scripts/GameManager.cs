@@ -15,6 +15,8 @@ public class GameManager : MonoBehaviour
     }
 
     public GameState currentState;
+    public SnakeController snakeController;
+    public FoodManager foodManager;
 
 
     public int score = 0;
@@ -99,8 +101,14 @@ public class GameManager : MonoBehaviour
 
     public void ReturnToMainMenu()
     {
-        SceneManager.LoadScene("MainMenu");
+        ResetStats();
         currentState = GameState.MainMenu;
+    }
+
+    public void RetryGame()
+    {
+        ResetStats();
+        currentState = GameState.Playing;
     }
 
     private void SaveHighScore()
@@ -121,6 +129,19 @@ public class GameManager : MonoBehaviour
             PlayerPrefs.SetFloat("LongestSurvivalTime", survivalTime);
             PlayerPrefs.Save();
         }
+    }
+
+    private void ResetStats()
+    {
+        score = 0;
+        survivalTime = 0;
+        ResetSnake();
+    }
+
+    private void ResetSnake()
+    {
+        snakeController.ResetSnake();
+        snakeController.StartGame();
     }
 }
 

@@ -25,13 +25,14 @@ public class SnakeController : MonoBehaviour
     {
         //initialize the snake with a head
         bodyParts.Add(this.transform);
-        currentPos = new Vector2Int((int)transform.position.x, (int)transform.position.y);
-
-        
+        Vector2Int startingPos = new Vector2Int(gridSize.x / 2, gridSize.y / 2);
+        bodyParts[0].position = new Vector3(startingPos.x, startingPos.y, 0);
+        currentPos = startingPos;
     }
 
     public void StartGame()
     {
+        StopAllCoroutines();
         //Start the movement coroutine
         StartCoroutine(Move());
     }
@@ -56,29 +57,31 @@ public class SnakeController : MonoBehaviour
             while (true)
             {
                 yield return new WaitForSeconds(moveRate);
-
-                Vector2Int previousPos = currentPos;
-                currentPos += currentDirection;
-
-                //Update head position
-                bodyParts[0].position = new Vector3(currentPos.x, currentPos.y, bodyParts[0].position.z);
-
-                //Update body positions
-                for (int i = 1; i < bodyParts.Count; i++)
+                if (GameManager.instance.currentState == GameManager.GameState.Playing)
                 {
-                    Vector2Int tempPos = new Vector2Int((int)bodyParts[i].position.x, (int)bodyParts[i].position.y);
-                    bodyParts[i].position = new Vector3(previousPos.x, previousPos.y, bodyParts[i].position.z);
-                    previousPos = tempPos;
-                }
+                    Vector2Int previousPos = currentPos;
+                    currentPos += currentDirection;
 
-                //check for body collisions
-                CheckCollisions();
+                    //Update head position
+                    bodyParts[0].position = new Vector3(currentPos.x, currentPos.y, bodyParts[0].position.z);
 
-                //Check for food consumption
-                if (foodManager.IsFoodAtPosition(currentPos))
-                {
-                    Grow();
-                    foodManager.SpawnFood();
+                    //Update body positions
+                    for (int i = 1; i < bodyParts.Count; i++)
+                    {
+                        Vector2Int tempPos = new Vector2Int((int)bodyParts[i].position.x, (int)bodyParts[i].position.y);
+                        bodyParts[i].position = new Vector3(previousPos.x, previousPos.y, bodyParts[i].position.z);
+                        previousPos = tempPos;
+                    }
+
+                    //check for body collisions
+                    CheckCollisions();
+
+                    //Check for food consumption
+                    if (foodManager.IsFoodAtPosition(currentPos))
+                    {
+                        Grow();
+                        foodManager.SpawnFood();
+                    }
                 }
             }
     }
@@ -88,7 +91,6 @@ public class SnakeController : MonoBehaviour
         // Check boundary collisions
         if (currentPos.x < 0 || currentPos.x >= gridSize.x || currentPos.y < 0 || currentPos.y >= gridSize.y)
         {
-            Debug.Log("Collided with wall");
             GameOver();
             return;
         }
@@ -98,10 +100,27 @@ public class SnakeController : MonoBehaviour
         {
             if((Vector2)bodyParts[i].position == (Vector2)currentPos)
             {
-                Debug.Log("Collided with segment at index: " + i);
                 GameOver();
                 return;
             }
+        }
+    }
+
+    public void ResetSnake()
+    {
+        //reset direction to right
+        currentDirection = new Vector2Int(1, 0);
+
+        //reset snake position to center
+        Vector2Int startingPosition = new Vector2Int(gridSize.x / 2, gridSize.y / 2);
+        bodyParts[0].position = new Vector3(startingPosition.x, startingPosition.y, 0);
+        currentPos = startingPosition;
+
+        //reset snake size
+        while (bodyParts.Count > 1)
+        {
+            Destroy(bodyParts[bodyParts.Count - 1].gameObject);
+            bodyParts.RemoveAt(bodyParts.Count - 1);
         }
     }
 
@@ -116,6 +135,7 @@ public class SnakeController : MonoBehaviour
 
     private void GameOver()
     {
+        StopAllCoroutines();
         GameManager.instance.GameOver();
     }
 }
