@@ -13,6 +13,9 @@ public class SnakeController : MonoBehaviour
     //How often the snake moves
     public float moveRate = 0.5f;
 
+    //has the snake moved since last direction change
+    private bool hasMoved = true;
+
     //Reference to the food manager
     public FoodManager foodManager;
 
@@ -55,16 +58,28 @@ public class SnakeController : MonoBehaviour
 
     private void Update()
     {
-        if (GameManager.instance.currentState == GameManager.GameState.Playing)
+        if (GameManager.instance.currentState == GameManager.GameState.Playing && hasMoved)
         {
-            if (Input.GetKeyDown(KeyCode.W) || Input.GetKeyDown(KeyCode.UpArrow) && currentDirection.y == 0)
+            if ((Input.GetKeyDown(KeyCode.W) || Input.GetKeyDown(KeyCode.UpArrow)) && currentDirection.y == 0)
+            {
                 currentDirection = new Vector2Int(0, 1);
-            else if (Input.GetKeyDown(KeyCode.S) || Input.GetKeyDown(KeyCode.DownArrow) && currentDirection.y == 0)
+                hasMoved = false;
+            }
+            else if ((Input.GetKeyDown(KeyCode.S) || Input.GetKeyDown(KeyCode.DownArrow)) && currentDirection.y == 0)
+            {
                 currentDirection = new Vector2Int(0, -1);
-            else if (Input.GetKeyDown(KeyCode.A) || Input.GetKeyDown(KeyCode.LeftArrow) && currentDirection.x == 0)
+                hasMoved = false;
+            }
+            else if ((Input.GetKeyDown(KeyCode.A) || Input.GetKeyDown(KeyCode.LeftArrow)) && currentDirection.x == 0)
+            {
                 currentDirection = new Vector2Int(-1, 0);
-            else if (Input.GetKeyDown(KeyCode.D) || Input.GetKeyDown(KeyCode.RightArrow) && currentDirection.x == 0)
+                hasMoved = false;
+            }
+            else if ((Input.GetKeyDown(KeyCode.D) || Input.GetKeyDown(KeyCode.RightArrow)) && currentDirection.x == 0)
+            {
                 currentDirection = new Vector2Int(1, 0);
+                hasMoved = false;
+            }
         }
     }
 
@@ -91,6 +106,8 @@ public class SnakeController : MonoBehaviour
 
                     //check for body collisions
                     CheckCollisions();
+
+                    hasMoved = true;
 
                     //Check for food consumption
                     if (foodManager.IsFoodAtPosition(currentPos))
