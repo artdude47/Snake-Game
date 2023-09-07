@@ -15,6 +15,9 @@ public class UIManager : MonoBehaviour
     public GameObject howToPlayPanel;
     public Button backButton;
 
+    //Settings UI
+    public GameObject settingsPanel;
+
     //in game UI
     public GameObject inGamePanel;
     public TextMeshProUGUI scoreText;
@@ -82,7 +85,14 @@ public class UIManager : MonoBehaviour
 
     private void ShowSettings()
     {
+        mainMenuPanel.SetActive(false);
+        settingsPanel.SetActive(true);
+    }
 
+    public void CloseSettings()
+    {
+        settingsPanel.SetActive(false);
+        mainMenuPanel.SetActive(true);
     }
 
     private void BackToMenu()

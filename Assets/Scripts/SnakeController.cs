@@ -30,6 +30,22 @@ public class SnakeController : MonoBehaviour
         currentPos = startingPos;
     }
 
+    public void UpdateMoveRate(string difficulty)
+    {
+        switch (difficulty)
+        {
+            case "Easy":
+                moveRate = 0.65f;
+                break;
+            case "Normal":
+                moveRate = 0.45f;
+                break;
+            case "Hard":
+                moveRate = 0.25f;
+                break;
+        }
+    }
+
     public void StartGame()
     {
         StopAllCoroutines();
