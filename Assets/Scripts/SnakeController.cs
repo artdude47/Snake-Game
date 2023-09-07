@@ -11,18 +11,24 @@ public class SnakeController : MonoBehaviour
     public Vector2Int gridSize;
 
     //How often the snake moves
-    public float moveRate = 0.5f;
+    public float moveRate = .35f;
 
     //has the snake moved since last direction change
-    private bool hasMoved = true;
+    public bool hasMoved = true;
 
     //Reference to the food manager
     public FoodManager foodManager;
+    public SettingsManager settingsManager;
 
     //start game moving to the right
-    private Vector2Int currentDirection = new Vector2Int(1, 0);
+    public Vector2Int currentDirection = new Vector2Int(1, 0);
+    public Vector2Int bufferedDirection;
+    public bool directionBuffered = false;
     public List<Transform> bodyParts = new List<Transform>();
     private Vector2Int currentPos;
+
+    public Color snakeColor = Color.white;
+    private bool isRainbowEffectActive = false;
 
     private void Start()
     {
@@ -41,7 +47,7 @@ public class SnakeController : MonoBehaviour
                 moveRate = 0.65f;
                 break;
             case "Normal":
-                moveRate = 0.45f;
+                moveRate = .35f;
                 break;
             case "Hard":
                 moveRate = 0.25f;
@@ -58,65 +64,106 @@ public class SnakeController : MonoBehaviour
 
     private void Update()
     {
-        if (GameManager.instance.currentState == GameManager.GameState.Playing && hasMoved)
+        if (isRainbowEffectActive)
+            UpdateColor(settingsManager.CurrentRainbowColor);
+
+        if (GameManager.instance.currentState == GameManager.GameState.Playing)
         {
+            Vector2Int newDirection = currentDirection;
+
             if ((Input.GetKeyDown(KeyCode.W) || Input.GetKeyDown(KeyCode.UpArrow)) && currentDirection.y == 0)
-            {
-                currentDirection = new Vector2Int(0, 1);
-                hasMoved = false;
-            }
+                newDirection = new Vector2Int(0, 1);
             else if ((Input.GetKeyDown(KeyCode.S) || Input.GetKeyDown(KeyCode.DownArrow)) && currentDirection.y == 0)
-            {
-                currentDirection = new Vector2Int(0, -1);
-                hasMoved = false;
-            }
+                newDirection = new Vector2Int(0, -1);
             else if ((Input.GetKeyDown(KeyCode.A) || Input.GetKeyDown(KeyCode.LeftArrow)) && currentDirection.x == 0)
-            {
-                currentDirection = new Vector2Int(-1, 0);
-                hasMoved = false;
-            }
+                newDirection = new Vector2Int(-1, 0);
             else if ((Input.GetKeyDown(KeyCode.D) || Input.GetKeyDown(KeyCode.RightArrow)) && currentDirection.x == 0)
+                newDirection = new Vector2Int(1, 0);
+
+            if(newDirection != currentDirection)
             {
-                currentDirection = new Vector2Int(1, 0);
-                hasMoved = false;
+                if (hasMoved)
+                {
+                    currentDirection = newDirection;
+                    hasMoved = false;
+                }
+                else
+                {
+                    bufferedDirection = newDirection;
+                    directionBuffered = true;
+                }
             }
         }
     }
 
     private IEnumerator Move()
     {
-            while (true)
+        while (true)
+        {
+            yield return new WaitForSeconds(moveRate);
+            if (GameManager.instance.currentState == GameManager.GameState.Playing)
             {
-                yield return new WaitForSeconds(moveRate);
-                if (GameManager.instance.currentState == GameManager.GameState.Playing)
+                
+                Vector2Int previousPos = currentPos;
+                currentPos += currentDirection;
+
+                //Update head position
+                bodyParts[0].position = new Vector3(currentPos.x, currentPos.y, bodyParts[0].position.z);
+
+                //Update body positions
+                for (int i = 1; i < bodyParts.Count; i++)
                 {
-                    Vector2Int previousPos = currentPos;
-                    currentPos += currentDirection;
+                    Vector2Int tempPos = new Vector2Int((int)bodyParts[i].position.x, (int)bodyParts[i].position.y);
+                    bodyParts[i].position = new Vector3(previousPos.x, previousPos.y, bodyParts[i].position.z);
+                    previousPos = tempPos;
+                }
 
-                    //Update head position
-                    bodyParts[0].position = new Vector3(currentPos.x, currentPos.y, bodyParts[0].position.z);
+                //check for body collisions
+                CheckCollisions();
 
-                    //Update body positions
-                    for (int i = 1; i < bodyParts.Count; i++)
+                hasMoved = true;
+
+                if (directionBuffered)
+                {
+                    if (!IsOppositeDirection(bufferedDirection, currentDirection))
                     {
-                        Vector2Int tempPos = new Vector2Int((int)bodyParts[i].position.x, (int)bodyParts[i].position.y);
-                        bodyParts[i].position = new Vector3(previousPos.x, previousPos.y, bodyParts[i].position.z);
-                        previousPos = tempPos;
+                        currentDirection = bufferedDirection;
                     }
+                    directionBuffered = false;
+                }
 
-                    //check for body collisions
-                    CheckCollisions();
-
-                    hasMoved = true;
-
-                    //Check for food consumption
-                    if (foodManager.IsFoodAtPosition(currentPos))
-                    {
-                        Grow();
-                        foodManager.SpawnFood();
-                    }
+                //Check for food consumption
+                if (foodManager.IsFoodAtPosition(currentPos))
+                {
+                    Grow();
+                    foodManager.SpawnFood();
                 }
             }
+        }
+    }
+
+    private bool IsOppositeDirection(Vector2Int dir1, Vector2Int dir2)
+    {
+        return dir1 == -dir2;
+    }
+
+    public void UpdateColor(Color color)
+    {
+        snakeColor = color;
+        foreach (Transform body in bodyParts)
+        {
+            body.GetComponent<SpriteRenderer>().color = snakeColor;
+        }
+    }
+
+    public void StartRainbowEffect()
+    {
+        isRainbowEffectActive = true;
+    }
+
+    public void StopRainbowEffect()
+    {
+        isRainbowEffectActive = false;
     }
 
     private void CheckCollisions()
@@ -160,6 +207,7 @@ public class SnakeController : MonoBehaviour
     public void Grow()
     {
         Transform newPart = Instantiate(snakeBodyPrefab, bodyParts[bodyParts.Count - 1].position, Quaternion.identity).transform;
+        newPart.GetComponent<SpriteRenderer>().color = snakeColor;
         bodyParts.Add(newPart);
 
         //Update score in GameManager

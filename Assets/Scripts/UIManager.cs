@@ -17,6 +17,7 @@ public class UIManager : MonoBehaviour
 
     //Settings UI
     public GameObject settingsPanel;
+    public SettingsManager settingsManager;
 
     //in game UI
     public GameObject inGamePanel;
@@ -86,6 +87,7 @@ public class UIManager : MonoBehaviour
     private void ShowSettings()
     {
         mainMenuPanel.SetActive(false);
+        settingsManager.RefreshColors();
         settingsPanel.SetActive(true);
     }
 
@@ -136,15 +138,22 @@ public class UIManager : MonoBehaviour
 
     private void RetryGame()
     {
-        gameOverPanel.SetActive(false);
+        ResetGameOverScreen();
         inGamePanel.SetActive(true);
         GameManager.instance.RetryGame();
     }
 
     private void ReturnToMainMenu()
     {
-        gameOverPanel.SetActive(false);
+        ResetGameOverScreen();
         mainMenuPanel.SetActive(true);
         GameManager.instance.ReturnToMainMenu();
+    }
+
+    private void ResetGameOverScreen()
+    {
+        highScoreGet.gameObject.SetActive(false);
+        highTimeGet.gameObject.SetActive(false);
+        gameOverPanel.SetActive(false);
     }
 }
