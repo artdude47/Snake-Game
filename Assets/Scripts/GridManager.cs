@@ -3,11 +3,9 @@ using UnityEngine;
 public class GridManager : MonoBehaviour
 {
     public static GridManager instance;
-
     public Vector2Int gridSize = new Vector2Int(20, 20);
-    public GameObject boundaryPrefab;
-
-    public bool showGridInPlayMode = false;
+    [SerializeField]
+    private GameObject boundaryPrefab;
 
     private void Awake()
     {
@@ -56,33 +54,11 @@ public class GridManager : MonoBehaviour
             Instantiate(boundaryPrefab, new Vector3(-1, i, 0), Quaternion.identity);
             Instantiate(boundaryPrefab, new Vector3(gridSize.x, i, 0), Quaternion.identity);
         }
-    }
 
-    private void OnDrawGizmos()
-    {
-        DrawGrid();
-    }
-
-    private void OnDrawGizmosSelected()
-    {
-        if (showGridInPlayMode)
-        {
-            DrawGrid();
-        }
-    }
-
-    private void DrawGrid()
-    {
-        Gizmos.color = Color.gray;
-
-        for(int x = 0; x <= gridSize.x; x++)
-        {
-            Gizmos.DrawLine(new Vector3(x, 0, 0), new Vector3(x, gridSize.y, 0));
-        }
-
-        for(int y = 0; y <= gridSize.y; y++)
-        {
-            Gizmos.DrawLine(new Vector3(0, y, 0), new Vector3(gridSize.x, y, 0));
-        }
+        // Drawing corners
+        Instantiate(boundaryPrefab, new Vector3(-1, -1, 0), Quaternion.identity);        // Bottom-left
+        Instantiate(boundaryPrefab, new Vector3(gridSize.x, -1, 0), Quaternion.identity); // Bottom-right
+        Instantiate(boundaryPrefab, new Vector3(-1, gridSize.y, 0), Quaternion.identity); // Top-left
+        Instantiate(boundaryPrefab, new Vector3(gridSize.x, gridSize.y, 0), Quaternion.identity); // Top-right
     }
 }

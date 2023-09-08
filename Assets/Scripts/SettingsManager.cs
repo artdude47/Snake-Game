@@ -6,28 +6,22 @@ using DG.Tweening;
 
 public class SettingsManager : MonoBehaviour
 {
+    [Header("UI References")]
     [SerializeField]
     private TextMeshProUGUI difficultyText;
     [SerializeField]
-    private SnakeController snakeController;
+    private Image colorDisplay;
     [SerializeField]
     private UIManager uiManager;
 
-    private int currentDifficultyIndex = 1; //normal is default
-    private string[] difficultyLevels = { "Easy", "Normal", "Hard" };
-    public Image colorDisplay;
-    private bool isRainbow = false;
-
+    [Header("Configuration")]
+    public List<string> difficultyLevels = new List<string>() { "Easy", "Normal", "Hard" };
+    public List<Color> snakeColors;
     private Color rainbowFlagColor = Color.black;
+
+    private int currentDifficultyIndex = 1; //normal is default
     public Color CurrentRainbowColor { get; private set; }
     private Tween rainbowTween;
-    public List<Color> snakeColors = new List<Color>()
-    {
-        Color.white,
-        Color.red,
-        Color.yellow,
-        Color.blue
-    };
 
     [System.Serializable]
     public struct ColorUnlock
@@ -35,11 +29,15 @@ public class SettingsManager : MonoBehaviour
         public int scoreRequired;
         public Color color;
     }
-
     public List<ColorUnlock> colorUnlock = new List<ColorUnlock>();
 
     private int currentColorIndex = 0;
     private Color snakeColor = Color.white;
+
+    public delegate void SettingsChangeDelegate(string difficulty, Color snakeColor);
+    public event SettingsChangeDelegate OnSettingsChanged;
+    public delegate void RainbowColorChangeDelegate(Color currentRainbowColor);
+    public event RainbowColorChangeDelegate OnRainbowColorChanged;
 
     private void Start()
     {
@@ -52,13 +50,13 @@ public class SettingsManager : MonoBehaviour
 
     public void IncreaseDifficulty()
     {
-        currentDifficultyIndex = Mathf.Clamp(currentDifficultyIndex + 1, 0, difficultyLevels.Length - 1);
+        currentDifficultyIndex = Mathf.Clamp(currentDifficultyIndex + 1, 0, difficultyLevels.Count - 1);
         UpdateDifficultyText();
     }
 
     public void DecreaseDifficulty()
     {
-        currentDifficultyIndex = Mathf.Clamp(currentDifficultyIndex - 1, 0, difficultyLevels.Length - 1);
+        currentDifficultyIndex = Mathf.Clamp(currentDifficultyIndex - 1, 0, difficultyLevels.Count - 1);
         UpdateDifficultyText();
     }
 
@@ -81,13 +79,11 @@ public class SettingsManager : MonoBehaviour
         if (snakeColor == rainbowFlagColor)
         {
             StartRainbowEffect();
-            isRainbow = true;
         }
         else
         {
             StopRainbowEffect();
             colorDisplay.color = snakeColor;
-            isRainbow = false;
         }
 
     }
@@ -108,10 +104,9 @@ public class SettingsManager : MonoBehaviour
         rainbowTween.OnUpdate(() =>
         {
             CurrentRainbowColor = colorDisplay.color;
+            OnRainbowColorChanged?.Invoke(CurrentRainbowColor);
         });
-        snakeController.StartRainbowEffect();
     }
-
 
     private void StopRainbowEffect()
     {
@@ -119,8 +114,6 @@ public class SettingsManager : MonoBehaviour
         {
             rainbowTween.Kill();
         }
-
-        snakeController.StopRainbowEffect();
     }
 
     private void UpdateDifficultyText()
@@ -130,8 +123,8 @@ public class SettingsManager : MonoBehaviour
 
     public void OnConfirm()
     {
-        snakeController.UpdateMoveRate(difficultyLevels[currentDifficultyIndex]);
-        snakeController.UpdateColor(snakeColor);
+        string chosenDifficulty = difficultyLevels[currentDifficultyIndex];
+        OnSettingsChanged?.Invoke(chosenDifficulty, snakeColor);
         uiManager.CloseSettings();
     }
 

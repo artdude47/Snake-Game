@@ -3,29 +3,8 @@ using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
-    //Singleton Instance
+    #region Singleton Pattern
     public static GameManager instance;
-
-    public enum GameState
-    {
-        MainMenu,
-        Playing,
-        Paused,
-        GameOver
-    }
-
-    public GameState currentState;
-    public SnakeController snakeController;
-    public FoodManager foodManager;
-
-
-    public int score = 0;
-    public int baseScorePerFood = 10;
-
-    public float survivalTime = 0f;
-
-    private bool isPaused;
-
     private void Awake()
     {
         //implement singleton pattern
@@ -33,7 +12,7 @@ public class GameManager : MonoBehaviour
         {
             instance = this;
             DontDestroyOnLoad(gameObject);
-        } 
+        }
         else
         {
             Destroy(gameObject);
@@ -41,30 +20,85 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    #endregion
+
+    #region Enums
+    public enum GameState
+    {
+        MainMenu,
+        Playing,
+        Paused,
+        GameOver
+    }
+    public GameState currentState;
+    #endregion
+
+    #region Game Components
+    [SerializeField]
+    private SnakeController snakeController;
+    [SerializeField]
+    private FoodManager foodManager;
+    [SerializeField]
+    private SettingsManager settingsManager;
+    [SerializeField]
+    private UIManager uiManager;
+    #endregion
+
+    #region Game Stats
+    public int score = 0;
+    public int baseScorePerFood = 10;
+    public float survivalTime = 0f;
+    #endregion 
+
+    private bool isPaused;
+
     private void Start()
     {
         currentState = GameState.MainMenu;
+        settingsManager.OnSettingsChanged += snakeController.HandleSettingsChange;
+        settingsManager.OnRainbowColorChanged += snakeController.UpdateRainbowColor;
+        uiManager.OnStartGameRequest += HandleGameStartRequest;
+        InitializeGame();
+    }
+
+    private void InitializeGame()
+    {
+        foodManager.Initialize(GridManager.instance.gridSize, snakeController);
+        snakeController.Initialize(GridManager.instance.gridSize, foodManager);
+    }
+
+    private void OnDestroy()
+    {
+        settingsManager.OnSettingsChanged -= snakeController.HandleSettingsChange;
+        settingsManager.OnRainbowColorChanged -= snakeController.UpdateRainbowColor;
+        uiManager.OnStartGameRequest -= HandleGameStartRequest;
     }
 
     private void Update()
     {
-        switch (currentState)
-        {
-            case GameState.Playing:
-                survivalTime += Time.deltaTime;
-                GameEvents.TimeChanged(survivalTime);
-                break;
-            case GameState.Paused:
-                break;
-        }
+        HandleGameStateUpdates();
+        HandleEscapeKey();
+    }
 
-        if (Input.GetKeyDown(KeyCode.Escape))
+    private void HandleGameStateUpdates()
+    {
+        if(currentState == GameState.Playing)
         {
-            if (currentState == GameState.Paused || currentState == GameState.Playing)
-            {
-                TogglePause();
-            }
+            survivalTime += Time.deltaTime;
+            GameEvents.TimeChanged(survivalTime);
         }
+    }
+
+    private void HandleEscapeKey()
+    {
+        if (Input.GetKeyDown(KeyCode.Escape) && (currentState == GameState.Paused || currentState == GameState.Playing))
+            TogglePause();
+    }
+
+    private void HandleGameStartRequest()
+    {
+        StartGame();
+        snakeController.StartGame();
     }
 
     public void StartGame()
@@ -76,7 +110,7 @@ public class GameManager : MonoBehaviour
     {
         isPaused = !isPaused;
         Time.timeScale = isPaused ? 0 : 1;
-
+        currentState = isPaused ? GameState.Paused : GameState.Playing;
         GameEvents.GamePaused(isPaused);
     }
 
@@ -107,8 +141,8 @@ public class GameManager : MonoBehaviour
 
     public void RetryGame()
     {
-        ResetStats();
         currentState = GameState.Playing;
+        ResetStats();
     }
 
     private void SaveHighScore()
@@ -135,13 +169,7 @@ public class GameManager : MonoBehaviour
     {
         score = 0;
         survivalTime = 0;
-        ResetSnake();
-    }
-
-    private void ResetSnake()
-    {
         snakeController.ResetSnake();
-        snakeController.StartGame();
     }
 }
 

@@ -4,166 +4,116 @@ using System.Collections;
 
 public class SnakeController : MonoBehaviour
 {
-    //Prefab for the snake body
-    public GameObject snakeBodyPrefab;
+    private FoodManager foodManager;
 
-    //define the size of the game grid
-    public Vector2Int gridSize;
+    [Header("Settings")]
+    [SerializeField] private GameObject snakeBodyPrefab;
+    [SerializeField] private Color snakeColor = Color.white;
 
-    //How often the snake moves
-    public float moveRate = .35f;
-
-    //has the snake moved since last direction change
-    public bool hasMoved = true;
-
-    //Reference to the food manager
-    public FoodManager foodManager;
-    public SettingsManager settingsManager;
-
-    //start game moving to the right
-    public Vector2Int currentDirection = new Vector2Int(1, 0);
-    public Vector2Int bufferedDirection;
-    public bool directionBuffered = false;
-    public List<Transform> bodyParts = new List<Transform>();
+    [Header("Runtime")]
+    private Vector2Int currentDirection = Vector2Int.right;
+    private Vector2Int bufferedDirection;
+    private bool directionBuffered = false;
+    private bool hasMoved = true;
     private Vector2Int currentPos;
-
-    public Color snakeColor = Color.white;
     private bool isRainbowEffectActive = false;
+    private float moveRate = 0.35f;
+    private Vector2Int gridSize;
 
-    private void Start()
+    public List<Transform> bodyParts = new List<Transform>();
+
+    public void Initialize(Vector2Int gridSize, FoodManager foodManager)
     {
-        //initialize the snake with a head
-        bodyParts.Add(this.transform);
-        Vector2Int startingPos = new Vector2Int(gridSize.x / 2, gridSize.y / 2);
-        bodyParts[0].position = new Vector3(startingPos.x, startingPos.y, 0);
-        currentPos = startingPos;
+        this.gridSize = gridSize;
+        this.foodManager = foodManager;
+        InitializeSnake();
     }
 
-    public void UpdateMoveRate(string difficulty)
+    private void InitializeSnake()
     {
-        switch (difficulty)
-        {
-            case "Easy":
-                moveRate = 0.65f;
-                break;
-            case "Normal":
-                moveRate = .35f;
-                break;
-            case "Hard":
-                moveRate = 0.25f;
-                break;
-        }
+        bodyParts.Add(this.transform);
+        currentPos = new Vector2Int(gridSize.x / 2, gridSize.y / 2);
+        transform.position = new Vector3(currentPos.x, currentPos.y, 0);
+    }
+
+    private void UpdateMoveRate(string difficulty)
+    {
+        float[] rates = { 0.65f, 0.35f, 0.25f };
+        string[] difficulties = { "Easy", "Normal", "Hard" };
+        int index = System.Array.IndexOf(difficulties, difficulty);
+        moveRate = rates[index];
     }
 
     public void StartGame()
     {
         StopAllCoroutines();
-        //Start the movement coroutine
         StartCoroutine(Move());
     }
 
     private void Update()
     {
-        if (isRainbowEffectActive)
-            UpdateColor(settingsManager.CurrentRainbowColor);
+        HandleInput();
+    }
 
-        if (GameManager.instance.currentState == GameManager.GameState.Playing)
+    private void HandleInput()
+    {
+        if (GameManager.instance.currentState != GameManager.GameState.Playing)
+            return;
+
+        Vector2Int newDirection = GetDirectionFromInput();
+
+        if (newDirection != Vector2.zero && newDirection != currentDirection)
         {
-            Vector2Int newDirection = currentDirection;
-
-            if ((Input.GetKeyDown(KeyCode.W) || Input.GetKeyDown(KeyCode.UpArrow)) && currentDirection.y == 0)
-                newDirection = new Vector2Int(0, 1);
-            else if ((Input.GetKeyDown(KeyCode.S) || Input.GetKeyDown(KeyCode.DownArrow)) && currentDirection.y == 0)
-                newDirection = new Vector2Int(0, -1);
-            else if ((Input.GetKeyDown(KeyCode.A) || Input.GetKeyDown(KeyCode.LeftArrow)) && currentDirection.x == 0)
-                newDirection = new Vector2Int(-1, 0);
-            else if ((Input.GetKeyDown(KeyCode.D) || Input.GetKeyDown(KeyCode.RightArrow)) && currentDirection.x == 0)
-                newDirection = new Vector2Int(1, 0);
-
-            if(newDirection != currentDirection)
+            if (hasMoved)
             {
-                if (hasMoved)
-                {
-                    currentDirection = newDirection;
-                    hasMoved = false;
-                }
-                else
-                {
-                    bufferedDirection = newDirection;
-                    directionBuffered = true;
-                }
+                currentDirection = newDirection;
+                hasMoved = false;
+            }
+            else
+            {
+                bufferedDirection = newDirection;
+                directionBuffered = true;
             }
         }
+    }
+
+    private Vector2Int GetDirectionFromInput()
+    {
+        if (Input.GetKeyDown(KeyCode.W) || Input.GetKeyDown(KeyCode.UpArrow)) return Vector2Int.up;
+        if (Input.GetKeyDown(KeyCode.S) || Input.GetKeyDown(KeyCode.DownArrow)) return Vector2Int.down;
+        if (Input.GetKeyDown(KeyCode.A) || Input.GetKeyDown(KeyCode.LeftArrow)) return Vector2Int.left;
+        if (Input.GetKeyDown(KeyCode.D) || Input.GetKeyDown(KeyCode.RightArrow)) return Vector2Int.right;
+        return Vector2Int.zero;
     }
 
     private IEnumerator Move()
     {
-        while (true)
+        while (GameManager.instance.currentState == GameManager.GameState.Playing)
         {
             yield return new WaitForSeconds(moveRate);
-            if (GameManager.instance.currentState == GameManager.GameState.Playing)
-            {
-                
-                Vector2Int previousPos = currentPos;
-                currentPos += currentDirection;
-
-                //Update head position
-                bodyParts[0].position = new Vector3(currentPos.x, currentPos.y, bodyParts[0].position.z);
-
-                //Update body positions
-                for (int i = 1; i < bodyParts.Count; i++)
-                {
-                    Vector2Int tempPos = new Vector2Int((int)bodyParts[i].position.x, (int)bodyParts[i].position.y);
-                    bodyParts[i].position = new Vector3(previousPos.x, previousPos.y, bodyParts[i].position.z);
-                    previousPos = tempPos;
-                }
-
-                //check for body collisions
-                CheckCollisions();
-
-                hasMoved = true;
-
-                if (directionBuffered)
-                {
-                    if (!IsOppositeDirection(bufferedDirection, currentDirection))
-                    {
-                        currentDirection = bufferedDirection;
-                    }
-                    directionBuffered = false;
-                }
-
-                //Check for food consumption
-                if (foodManager.IsFoodAtPosition(currentPos))
-                {
-                    Grow();
-                    foodManager.SpawnFood();
-                }
-            }
+            PerformMovement();
+            CheckCollisions();
+            HandleFoodConsumption();
+            hasMoved = true;
+            ApplyBufferedDirection();
         }
     }
 
-    private bool IsOppositeDirection(Vector2Int dir1, Vector2Int dir2)
+    private void PerformMovement()
     {
-        return dir1 == -dir2;
-    }
+        Vector2Int previousPos = currentPos;
+        currentPos += currentDirection;
 
-    public void UpdateColor(Color color)
-    {
-        snakeColor = color;
-        foreach (Transform body in bodyParts)
+        // Update head position
+        bodyParts[0].position = new Vector3(currentPos.x, currentPos.y, bodyParts[0].position.z);
+
+        // Update body positions
+        for (int i = 1; i < bodyParts.Count; i++)
         {
-            body.GetComponent<SpriteRenderer>().color = snakeColor;
+            Vector2Int tempPos = new Vector2Int((int)bodyParts[i].position.x, (int)bodyParts[i].position.y);
+            bodyParts[i].position = new Vector3(previousPos.x, previousPos.y, bodyParts[i].position.z);
+            previousPos = tempPos;
         }
-    }
-
-    public void StartRainbowEffect()
-    {
-        isRainbowEffectActive = true;
-    }
-
-    public void StopRainbowEffect()
-    {
-        isRainbowEffectActive = false;
     }
 
     private void CheckCollisions()
@@ -175,16 +125,48 @@ public class SnakeController : MonoBehaviour
             return;
         }
 
-        //Check for self collisions
+        // Check for self collisions
         for (int i = 1; i < bodyParts.Count; i++)
         {
-            if((Vector2)bodyParts[i].position == (Vector2)currentPos)
+            if ((Vector2)bodyParts[i].position == (Vector2)currentPos)
             {
                 GameOver();
                 return;
             }
         }
     }
+
+    private void HandleFoodConsumption()
+    {
+        if (foodManager.IsFoodAtPosition(currentPos))
+        {
+            Grow();
+            foodManager.SpawnFood();
+        }
+    }
+
+    private void ApplyBufferedDirection()
+    {
+        if (!directionBuffered) return;
+        if (!IsOppositeDirection(bufferedDirection, currentDirection))
+        {
+            currentDirection = bufferedDirection;
+        }
+        directionBuffered = false;
+    }
+
+    private bool IsOppositeDirection(Vector2Int dir1, Vector2Int dir2) => dir1 == -dir2;
+
+    private void UpdateColor(Color color)
+    {
+        snakeColor = color;
+        foreach (Transform body in bodyParts)
+        {
+            body.GetComponent<SpriteRenderer>().color = snakeColor;
+        }
+    }
+
+    public void ToggleRainbowEffect(bool state) => isRainbowEffectActive = state;
 
     public void ResetSnake()
     {
@@ -202,6 +184,8 @@ public class SnakeController : MonoBehaviour
             Destroy(bodyParts[bodyParts.Count - 1].gameObject);
             bodyParts.RemoveAt(bodyParts.Count - 1);
         }
+
+        StartGame();
     }
 
     public void Grow()
@@ -216,7 +200,18 @@ public class SnakeController : MonoBehaviour
 
     private void GameOver()
     {
-        StopAllCoroutines();
+        //StopAllCoroutines();
         GameManager.instance.GameOver();
+    }
+
+    public void HandleSettingsChange(string difficutly, Color color)
+    {
+        UpdateMoveRate(difficutly);
+        UpdateColor(color);
+    }
+
+    public void UpdateRainbowColor(Color newColor)
+    {
+        UpdateColor(newColor);
     }
 }

@@ -2,16 +2,18 @@ using UnityEngine;
 
 public class FoodManager : MonoBehaviour
 {
-    public GameObject foodPrefab;
-    public Vector2Int gridSize;
-    public SnakeController snakeController;
-    private Vector2Int currentFoodPosition;
+    [SerializeField]
+    private GameObject foodPrefab;
 
+    private Vector2Int gridSize;
+    private SnakeController snakeController;
+    private Vector2Int currentFoodPosition;
     private GameObject currentFood;
 
-
-    private void Start()
+    public void Initialize(Vector2Int gridSize, SnakeController snakeController)
     {
+        this.gridSize = gridSize;
+        this.snakeController = snakeController;
         SpawnFood();
     }
 

@@ -437,7 +437,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   gridSize: {x: 20, y: 20}
   boundaryPrefab: {fileID: 7161702356302634123, guid: 3f273ac88ae88ab4d94c86a64440d183, type: 3}
-  showGridInPlayMode: 1
 --- !u!4 &228997066
 Transform:
   m_ObjectHideFlags: 0
@@ -618,8 +617,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   foodPrefab: {fileID: 1375292402397028219, guid: 060ebbd78c2adb94abdcfc95cd83b194, type: 3}
-  gridSize: {x: 20, y: 20}
-  snakeController: {fileID: 465809116}
 --- !u!4 &272697376
 Transform:
   m_ObjectHideFlags: 0
@@ -1358,11 +1355,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   snakeBodyPrefab: {fileID: 2753248875965853789, guid: f96d5bfcbb178f34aae335ee284daa8f, type: 3}
-  gridSize: {x: 20, y: 20}
-  moveRate: 0.5
-  foodManager: {fileID: 272697375}
-  bodyParts: []
   snakeColor: {r: 1, g: 1, b: 1, a: 1}
+  bodyParts: []
 --- !u!1 &588775335
 GameObject:
   m_ObjectHideFlags: 0
@@ -3135,6 +3129,8 @@ MonoBehaviour:
   currentState: 0
   snakeController: {fileID: 465809116}
   foodManager: {fileID: 272697375}
+  settingsManager: {fileID: 1940824008}
+  uiManager: {fileID: 1940824007}
   score: 0
   baseScorePerFood: 10
   survivalTime: 0
@@ -4917,27 +4913,32 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0da6f26b7fd07654da3f931d3bcccca2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  mainMenuPanel: {fileID: 1701092752}
-  playButton: {fileID: 616576117}
-  howToPlayButton: {fileID: 2014781237}
-  settingsButton: {fileID: 757949193}
-  howToPlayPanel: {fileID: 1491880704}
-  backButton: {fileID: 1968349703}
-  settingsPanel: {fileID: 1902883423}
-  inGamePanel: {fileID: 1274408634}
-  scoreText: {fileID: 1493747848}
-  timeSurvivedText: {fileID: 657901671}
-  pausedText: {fileID: 704601573}
-  snakeController: {fileID: 465809116}
-  gameOverPanel: {fileID: 1493607733}
-  finalScoreText: {fileID: 1056563148}
-  highScoreText: {fileID: 144241283}
-  finalTimeSurvived: {fileID: 966341150}
-  highestTimeSurvived: {fileID: 278758593}
-  highScoreGet: {fileID: 317272246}
-  highTimeGet: {fileID: 1527363683}
-  retryButton: {fileID: 817557618}
-  mainMenuButton: {fileID: 842416888}
+  mainMenuUI:
+    mainMenuPanel: {fileID: 1701092752}
+    playButton: {fileID: 616576117}
+    howToPlayButton: {fileID: 2014781237}
+    settingsButton: {fileID: 757949193}
+  howToPlayUI:
+    howToPlayPanel: {fileID: 1491880704}
+    backButton: {fileID: 1968349703}
+  settingsUI:
+    settingsPanel: {fileID: 1902883423}
+    settingsManager: {fileID: 1940824008}
+  inGameUI:
+    inGamePanel: {fileID: 1274408634}
+    scoreText: {fileID: 1493747848}
+    timeSurvivedText: {fileID: 657901671}
+    pausedText: {fileID: 704601573}
+  gameOverUI:
+    gameOverPanel: {fileID: 1493607733}
+    finalScoreText: {fileID: 1056563148}
+    highScoreText: {fileID: 144241283}
+    finalTimeSurvived: {fileID: 966341150}
+    highestTimeSurvived: {fileID: 278758593}
+    highScoreGet: {fileID: 317272246}
+    highTimeGet: {fileID: 1527363683}
+    retryButton: {fileID: 817557618}
+    mainMenuButton: {fileID: 842416888}
 --- !u!114 &1940824008
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4951,14 +4952,26 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   difficultyText: {fileID: 2078252090}
-  snakeController: {fileID: 465809116}
-  uiManager: {fileID: 1940824007}
   colorDisplay: {fileID: 457670245}
+  uiManager: {fileID: 1940824007}
+  difficultyLevels:
+  - Easy
+  - Normal
+  - Hard
   snakeColors:
   - {r: 1, g: 0, b: 0, a: 1}
   - {r: 1, g: 1, b: 1, a: 1}
   - {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
   - {r: 0, g: 0, b: 1, a: 1}
+  colorUnlock:
+  - scoreRequired: 1500
+    color: {r: 0.45291975, g: 0.022828398, b: 0.5377358, a: 1}
+  - scoreRequired: 3000
+    color: {r: 1, g: 0.042452812, b: 0.56336594, a: 1}
+  - scoreRequired: 4500
+    color: {r: 0.82, g: 0.31433335, b: 0, a: 1}
+  - scoreRequired: 10000
+    color: {r: 0, g: 0, b: 0, a: 1}
 --- !u!1 &1968349700
 GameObject:
   m_ObjectHideFlags: 0

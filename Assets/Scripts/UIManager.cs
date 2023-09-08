@@ -2,41 +2,207 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using UnityEngine.SceneManagement;
+using System;
+
+[System.Serializable]
+public class MainMenuUI
+{
+    [SerializeField]
+    private GameObject mainMenuPanel;
+    [SerializeField]
+    private Button playButton;
+    [SerializeField]
+    private Button howToPlayButton;
+    [SerializeField]
+    private Button settingsButton;
+
+    public void Initialize(Action onPlay, Action onHowToPlay, Action onSettings)
+    {
+        playButton.onClick.AddListener(() => onPlay());
+        howToPlayButton.onClick.AddListener(() => onHowToPlay());
+        settingsButton.onClick.AddListener(() => onSettings());
+    }
+
+    public void Show()
+    {
+        mainMenuPanel.SetActive(true);
+    }
+
+    public void Hide()
+    {
+        mainMenuPanel.SetActive(false);
+    }
+}
+
+[System.Serializable]
+public class HowToPlayUI
+{
+    [SerializeField]
+    private GameObject howToPlayPanel;
+    [SerializeField]
+    private Button backButton;
+
+    public void Initialize(Action onBackButton)
+    {
+        backButton.onClick.AddListener(() => onBackButton());
+    }
+
+    public void Show()
+    {
+        howToPlayPanel.SetActive(true);
+    }
+
+    public void Hide()
+    {
+        howToPlayPanel.SetActive(false);
+    }
+}
+
+[System.Serializable]
+public class SettingsUI
+{
+    [SerializeField]
+    private GameObject settingsPanel;
+    [SerializeField]
+    private SettingsManager settingsManager;
+
+    public void Show()
+    {
+        settingsPanel.SetActive(true);
+    }
+
+    public void Hide()
+    {
+        settingsPanel.SetActive(false);
+    }
+}
+
+[System.Serializable]
+public class InGameUI
+{
+    [SerializeField]
+    private GameObject inGamePanel;
+    [SerializeField]
+    private TextMeshProUGUI scoreText;
+    [SerializeField]
+    private TextMeshProUGUI timeSurvivedText;
+    [SerializeField]
+    private TextMeshProUGUI pausedText;
+
+    public void Show()
+    {
+        inGamePanel.SetActive(true);
+    }
+
+    public void Hide()
+    {
+        inGamePanel.SetActive(false);
+    }
+
+    public void UpdateScore(int score)
+    {
+        scoreText.text = $"Score: {score}";
+    }
+
+    public void UpdateTimeSurvived(float time)
+    {
+        timeSurvivedText.text = $"Time: {Mathf.RoundToInt(time)}";
+    }
+
+    public void ShowPauseStatus(bool isPaused)
+    {
+        pausedText.gameObject.SetActive(isPaused);
+    }
+}
+
+[System.Serializable]
+public class GameOverUI
+{
+    [SerializeField]
+    private GameObject gameOverPanel;
+    [SerializeField]
+    private TextMeshProUGUI finalScoreText;
+    [SerializeField]
+    private TextMeshProUGUI highScoreText;
+    [SerializeField]
+    private TextMeshProUGUI finalTimeSurvived;
+    [SerializeField]
+    private TextMeshProUGUI highestTimeSurvived;
+    [SerializeField]
+    private TextMeshProUGUI highScoreGet;
+    [SerializeField]
+    private TextMeshProUGUI highTimeGet;
+    [SerializeField]
+    private Button retryButton;
+    [SerializeField]
+    private Button mainMenuButton;
+
+    public void Initialize(Action onRetryButton, Action onMainMenuButton)
+    {
+        retryButton.onClick.AddListener(() => onRetryButton());
+        mainMenuButton.onClick.AddListener(() => onMainMenuButton());
+    }
+
+    public void Show()
+    {
+        gameOverPanel.SetActive(true);
+    }
+
+    public void Hide()
+    {
+        gameOverPanel.SetActive(false);
+    }
+
+    public void UpdateText(int score, float time)
+    {
+        finalScoreText.text = $"You scored {score}";
+        finalTimeSurvived.text = $"You survived {Mathf.RoundToInt(time)} seconds";
+        var highScore = PlayerPrefs.GetInt("HighScore");
+        var highTime = PlayerPrefs.GetFloat("LongestSurvivalTime");
+
+        highScoreText.text = $"High score is: {highScore}";
+        highestTimeSurvived.text = $"Longest survived is: {Mathf.RoundToInt(highTime)} seconds";
+
+        CheckHighScoreGet(score, highScore);
+        CheckHighTimeGet(time, highTime);
+    }
+
+    private void CheckHighScoreGet(int score, int highScore)
+    {
+        if (score == highScore)
+            highScoreGet.gameObject.SetActive(true);
+        else
+            highScoreGet.gameObject.SetActive(false);
+    }
+
+    private void CheckHighTimeGet(float time, float highTime)
+    {
+        if (time == highTime)
+            highTimeGet.gameObject.SetActive(true);
+        else
+            highTimeGet.gameObject.SetActive(false);
+    }
+}
+
+public enum UIContext
+{
+    MainMenu,
+    InGame,
+    HowToPlay,
+    Settings,
+    GameOver
+}
 
 public class UIManager : MonoBehaviour
 {
-    //Main Menu
-    public GameObject mainMenuPanel;
-    public Button playButton;
-    public Button howToPlayButton;
-    public Button settingsButton;
+    public MainMenuUI mainMenuUI;
+    public HowToPlayUI howToPlayUI;
+    public SettingsUI settingsUI;
+    public InGameUI inGameUI;
+    public GameOverUI gameOverUI;
 
-    //How to play
-    public GameObject howToPlayPanel;
-    public Button backButton;
-
-    //Settings UI
-    public GameObject settingsPanel;
-    public SettingsManager settingsManager;
-
-    //in game UI
-    public GameObject inGamePanel;
-    public TextMeshProUGUI scoreText;
-    public TextMeshProUGUI timeSurvivedText;
-    public TextMeshProUGUI pausedText;
-    public SnakeController snakeController;
-
-    //Game over UI
-    public GameObject gameOverPanel;
-    public TextMeshProUGUI finalScoreText;
-    public TextMeshProUGUI highScoreText;
-    public TextMeshProUGUI finalTimeSurvived;
-    public TextMeshProUGUI highestTimeSurvived;
-    public TextMeshProUGUI highScoreGet;
-    public TextMeshProUGUI highTimeGet;
-    public Button retryButton;
-    public Button mainMenuButton;
-
+    public event Action OnStartGameRequest;
+    
     private void OnEnable()
     {
         GameEvents.OnScoreChange += UpdateScore;
@@ -52,108 +218,111 @@ public class UIManager : MonoBehaviour
         GameEvents.OnGamePause -= ShowPauseStatus;
         GameEvents.OnGameOver -= ShowGameOver;
     }
-
+    
     private void Start()
     {
-        //Main Menu
-        playButton.onClick.AddListener(StartGame);
-        howToPlayButton.onClick.AddListener(ShowHowToPlay);
-        settingsButton.onClick.AddListener(ShowSettings);
-        backButton.onClick.AddListener(BackToMenu);
+        mainMenuUI.Initialize(StartGame, ShowHowToPlay, ShowSettings);
+        howToPlayUI.Initialize(BackToMenu);
+        gameOverUI.Initialize(RetryGame, ReturnToMainMenu);
+        SetUIContext(UIContext.MainMenu);
+    }
 
-        //Game over UI
-        retryButton.onClick.AddListener(RetryGame);
-        mainMenuButton.onClick.AddListener(ReturnToMainMenu);
+    public void SetUIContext(UIContext context)
+    {
+        DeactivateAllPanels();
+
+        switch(context)
+        {
+            case UIContext.MainMenu:
+                mainMenuUI.Show();
+                break;
+
+            case UIContext.InGame:
+                inGameUI.Show();
+                break;
+
+            case UIContext.HowToPlay:
+                howToPlayUI.Show();
+                break;
+
+            case UIContext.Settings:
+                settingsUI.Show();
+                break;
+
+            case UIContext.GameOver:
+                gameOverUI.Show();
+                break;
+            default:
+                Debug.LogError($"UI Context {context} not handled!");
+                break;
+        }
+    }
+
+    private void DeactivateAllPanels()
+    {
+        mainMenuUI.Hide();
+        inGameUI.Hide();
+        howToPlayUI.Hide();
+        settingsUI.Hide();
+        gameOverUI.Hide();
     }
 
     private void StartGame()
     {
-        mainMenuPanel.SetActive(false);
-        gameOverPanel.SetActive(false);
-        inGamePanel.SetActive(true);
-        highScoreGet.gameObject.SetActive(false);
-        highTimeGet.gameObject.SetActive(false);
-
-        GameManager.instance.StartGame();
-        snakeController.StartGame();
+        SetUIContext(UIContext.InGame);
+        OnStartGameRequest?.Invoke();
     }
 
     private void ShowHowToPlay()
     {
-        mainMenuPanel.SetActive(false);
-        howToPlayPanel.SetActive(true);
+        SetUIContext(UIContext.HowToPlay);
     }
 
     private void ShowSettings()
     {
-        mainMenuPanel.SetActive(false);
-        settingsManager.RefreshColors();
-        settingsPanel.SetActive(true);
+        SetUIContext(UIContext.Settings);
     }
 
     public void CloseSettings()
     {
-        settingsPanel.SetActive(false);
-        mainMenuPanel.SetActive(true);
+        SetUIContext(UIContext.MainMenu);
     }
 
     private void BackToMenu()
     {
-        howToPlayPanel.SetActive(false);
-
-        mainMenuPanel.SetActive(true);
+        SetUIContext(UIContext.MainMenu);
     }
 
     public void UpdateScore(int score)
     {
-        scoreText.text = $"Score: {score.ToString()}";
+        inGameUI.UpdateScore(score);
     }
 
     public void UpdateTimeSurvived(float time)
     {
-        timeSurvivedText.text = $"Time: {Mathf.RoundToInt(time).ToString()}";
+        inGameUI.UpdateTimeSurvived(time);
     }
 
     private void ShowPauseStatus(bool isPaused)
     {
-        pausedText.gameObject.SetActive(isPaused);
+        inGameUI.ShowPauseStatus(isPaused);
     }
 
     public void ShowGameOver(int finalScore, float finalTime)
     {
-        inGamePanel.SetActive(false);
-        gameOverPanel.SetActive(true);
-        finalScoreText.text = $"Score: {finalScore.ToString()}";
-        finalTimeSurvived.text = $"Time Survived: {Mathf.RoundToInt(finalTime).ToString()}";
-
-        highScoreText.text = $"High Score: {PlayerPrefs.GetInt("HighScore")}";
-        highestTimeSurvived.text = $"Highest Time: {PlayerPrefs.GetFloat("LongestSurvivalTime")}";
-
-        //Show text if high score is acheived
-        if (PlayerPrefs.GetInt("HighScore") == finalScore)
-            highScoreGet.gameObject.SetActive(true);
-        if (PlayerPrefs.GetFloat("LongestSurvivalTime") == finalTime)
-            highTimeGet.gameObject.SetActive(true);
+        SetUIContext(UIContext.GameOver);
+        gameOverUI.UpdateText(finalScore, finalTime);
     }
 
     private void RetryGame()
     {
-        ResetGameOverScreen();
-        inGamePanel.SetActive(true);
+        SetUIContext(UIContext.InGame);
         GameManager.instance.RetryGame();
     }
 
     private void ReturnToMainMenu()
     {
-        ResetGameOverScreen();
-        mainMenuPanel.SetActive(true);
+        SetUIContext(UIContext.MainMenu);
         GameManager.instance.ReturnToMainMenu();
-    }
-
-    private void ResetGameOverScreen()
-    {
-        highScoreGet.gameObject.SetActive(false);
-        highTimeGet.gameObject.SetActive(false);
-        gameOverPanel.SetActive(false);
     }
 }
